@@ -1,0 +1,3188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#090313">
+
+  <title>Karina</title>
+
+  <style>
+    /* ================= VARIABLES Y ESTRUCTURA ================= */
+
+    :root {
+      color-scheme: dark;
+      --cyan: #75f5ff;
+      --pink: #ff48d8;
+      --yellow: #ffe75c;
+      --unit: min(84vw, 70vh);
+      --float-amplitude: 5px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #090313;
+      color: #f2eaff;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        radial-gradient(
+          ellipse at 50% 65%,
+          #361044 0%,
+          transparent 53%
+        ),
+        linear-gradient(
+          180deg,
+          #05020e 0%,
+          #130723 58%,
+          #230931 100%
+        );
+    }
+
+    .scene::before,
+    .scene::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .scene::before {
+      z-index: 10;
+      background:
+        radial-gradient(
+          ellipse at center,
+          transparent 35%,
+          #03000799 100%
+        );
+    }
+
+    .scene::after {
+      z-index: 15;
+      opacity: .42;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0 3px,
+          #00000028 3px 4px
+        );
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ================= ESPACIO PROFUNDO ================= */
+
+    .nebula {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(
+          ellipse at 37% 42%,
+          #e617a51c,
+          transparent 33%
+        ),
+        radial-gradient(
+          ellipse at 64% 47%,
+          #16d9f318,
+          transparent 30%
+        ),
+        radial-gradient(
+          ellipse at 50% 76%,
+          #b719882b,
+          transparent 50%
+        );
+    }
+
+    #space {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .moon {
+      position: absolute;
+      z-index: 1;
+      top: clamp(82px, 13vh, 160px);
+      right: clamp(24px, 12vw, 220px);
+      width: clamp(78px, 16vmin, 164px);
+      aspect-ratio: 1;
+      overflow: hidden;
+      border-radius: 50%;
+      border: 1px solid #e7d8ffb3;
+      background:
+        radial-gradient(
+          circle at 35% 31%,
+          #9b8bb352 0 8%,
+          transparent 9%
+        ),
+        radial-gradient(
+          circle at 65% 58%,
+          #7f659745 0 12%,
+          transparent 13%
+        ),
+        radial-gradient(
+          circle at 30% 72%,
+          #9584b34a 0 6%,
+          transparent 7%
+        ),
+        radial-gradient(
+          circle at 67% 26%,
+          #fff7ff70 0 4%,
+          transparent 5%
+        ),
+        radial-gradient(
+          circle at 32% 25%,
+          #fff8ff,
+          #dacdf9 43%,
+          #9c86dc 76%,
+          #554186
+        );
+      box-shadow:
+        0 0 28px #bdd8ff66,
+        0 0 75px #9868e64d,
+        0 0 150px #a52bcd26,
+        inset -12px -10px 24px #351a6459;
+    }
+
+    .moon::after {
+      content: "";
+      position: absolute;
+      inset: 54% 0 0;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0 7px,
+          #211035a6 7px 10px
+        );
+    }
+
+    /* ================= CUADRÍCULA ================= */
+
+    .floor {
+      display: none;
+      position: absolute;
+      inset: auto 0 0;
+      z-index: 1;
+      height: 34%;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, #22062a00, #17062373);
+      -webkit-mask-image:
+        linear-gradient(transparent, #000 17%);
+      mask-image:
+        linear-gradient(transparent, #000 17%);
+    }
+
+    .floor svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .horizon {
+      display: none;
+      position: absolute;
+      z-index: 1;
+      top: 66%;
+      left: 8%;
+      right: 8%;
+      height: 1px;
+      opacity: .55;
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          #c366ea 28%,
+          #90ffff 50%,
+          #c366ea 72%,
+          transparent
+        );
+      box-shadow:
+        0 0 16px #f02bc4,
+        0 0 50px #d721b8;
+    }
+
+    /* ================= UNIVERSO EN ROTACIÓN ================= */
+
+    /* El universo gira en 3D de adelante hacia atrás. Este contenedor
+       solo agrupa el cosmos; las estrellas se proyectan en profundidad
+       desde el canvas (rotación real sobre el eje horizontal). */
+    .universe {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .universe-logo {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: clamp(180px, calc(var(--unit) * .40), 400px);
+      aspect-ratio: 1230 / 1278;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+      opacity: .95;
+      filter:
+        drop-shadow(0 0 14px #ffcf5e99)
+        drop-shadow(0 0 34px #7a1fb066);
+      animation: logo-breathe 6s ease-in-out infinite;
+    }
+
+    .universe-logo::before {
+      content: "";
+      position: absolute;
+      inset: -34%;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffd76e2e, #c742e414 46%, transparent 72%);
+      filter: blur(10px);
+    }
+
+    .universe-logo img {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    @keyframes logo-breathe {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    /* ================= ÓRBITAS Y PORTAL ================= */
+
+    .portal {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 5;
+      width: calc(var(--unit) * .34);
+    }
+
+    .portal::before {
+      content: "";
+      position: absolute;
+      inset: -65%;
+      border-radius: 50%;
+      background:
+        radial-gradient(
+          circle,
+          #7defff26,
+          #d32cc62e 28%,
+          #822ddd12 48%,
+          transparent 68%
+        );
+      filter: blur(18px);
+      animation: breathe 5s ease-in-out infinite alternate;
+    }
+
+    .portal::after {
+      content: "";
+      position: absolute;
+      inset: -9%;
+      border: 1px solid #7df4ff36;
+      border-radius: 50%;
+      transform: rotate(-27deg) scaleY(.78);
+      box-shadow: inset 0 0 30px #ef39da26;
+    }
+
+    .vortex {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        conic-gradient(
+          from 0deg,
+          transparent 0deg,
+          #39efff 40deg,
+          transparent 94deg,
+          #ff35cf 156deg,
+          transparent 215deg,
+          #9bffff 268deg,
+          transparent 320deg
+        );
+      -webkit-mask-image:
+        radial-gradient(
+          circle,
+          transparent 20%,
+          #000 33%,
+          #000 47%,
+          transparent 67%
+        );
+      mask-image:
+        radial-gradient(
+          circle,
+          transparent 20%,
+          #000 33%,
+          #000 47%,
+          transparent 67%
+        );
+      filter: blur(5px);
+      animation: turn 13s linear infinite;
+    }
+
+    .vortex-back {
+      inset: -14%;
+      opacity: .66;
+      filter: blur(8px);
+      animation-duration: 23s;
+      animation-direction: reverse;
+    }
+
+    .disc {
+      position: absolute;
+      top: 26%;
+      left: -8%;
+      width: 116%;
+      height: 48%;
+      border: 2px solid #9affffd9;
+      border-bottom-color: #ff55da;
+      border-radius: 50%;
+      transform: rotate(-27deg);
+      background:
+        radial-gradient(
+          ellipse,
+          transparent 30%,
+          #ad29cf33 58%,
+          transparent 72%
+        );
+      box-shadow:
+        0 0 9px #bfffff99,
+        0 0 23px #f436dc66,
+        inset 0 0 17px #63efff73;
+    }
+
+    .disc::before {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border: 1px solid #ffb0efad;
+      border-radius: 50%;
+      box-shadow: 0 0 13px #ff51d9;
+    }
+
+    .core {
+      position: absolute;
+      inset: 33%;
+      border-radius: 50%;
+      background:
+        radial-gradient(
+          circle,
+          #fff 0%,
+          #d5ffff 6%,
+          #5feeff 18%,
+          #f548d4 47%,
+          #30114b 72%
+        );
+      box-shadow:
+        0 0 25px #68eaffb3,
+        0 0 55px #d634db99,
+        0 0 90px #d634db40;
+      animation: breathe 4s ease-in-out infinite alternate;
+    }
+
+    .core::after {
+      content: "";
+      position: absolute;
+      top: calc(50% - 1px);
+      left: -90%;
+      width: 280%;
+      height: 2px;
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          #a4ffff99,
+          #fff,
+          #a4ffff99,
+          transparent
+        );
+      box-shadow: 0 0 12px #5df8ff;
+      transform: rotate(-27deg);
+    }
+
+    /* ================= FLORES ANIMADAS ================= */
+
+    #flowers {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+
+      /*
+        No asignar z-index a este contenedor.
+        Sus flores deben compartir las capas con el portal.
+      */
+    }
+
+    .flower {
+      position: absolute;
+      top: 0;
+      left: 0;
+      perspective: 760px;
+      transform-origin: center;
+      will-change: transform;
+    }
+
+    /*
+      Capas independientes:
+      .flower       -> órbita mediante JavaScript
+      .flower-float -> flotación vertical
+      .flower-tilt  -> inclinación suave
+      .flower-turn  -> rotación sobre su eje
+    */
+
+    .flower-float,
+    .flower-tilt,
+    .flower-turn {
+      width: 100%;
+      height: 100%;
+      transform-origin: center;
+      transform-style: preserve-3d;
+    }
+
+    .flower-float {
+      animation:
+        flower-float var(--float-duration, 7s)
+        ease-in-out infinite;
+      animation-delay: var(--float-delay, 0s);
+    }
+
+    .flower-tilt {
+      animation:
+        flower-tilt calc(var(--float-duration, 7s) * 1.6)
+        ease-in-out infinite;
+      animation-delay: var(--float-delay, 0s);
+    }
+
+    .flower-turn {
+      animation:
+        flower-spin var(--spin-duration, 90s)
+        linear infinite;
+      animation-delay: var(--spin-delay, 0s);
+      animation-direction: var(--spin-direction, normal);
+    }
+
+    .flower-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      backface-visibility: hidden;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter:
+        drop-shadow(0 5px 6px #08021095)
+        drop-shadow(0 0 7px #ffdb3326);
+    }
+
+    @keyframes flower-float {
+      0%, 100% {
+        transform:
+          translate3d(
+            0,
+            calc(var(--float-amplitude) * -.6),
+            0
+          );
+      }
+
+      50% {
+        transform:
+          translate3d(0, var(--float-amplitude), 0);
+      }
+    }
+
+    @keyframes flower-tilt {
+      0%, 100% {
+        transform: rotateX(6deg) rotateY(-9deg);
+      }
+
+      50% {
+        transform: rotateX(-5deg) rotateY(9deg);
+      }
+    }
+
+    @keyframes flower-spin {
+      from {
+        transform: rotateZ(0deg);
+      }
+
+      to {
+        transform: rotateZ(360deg);
+      }
+    }
+
+    /* ================= ENCABEZADO ================= */
+
+    .header {
+      position: absolute;
+      z-index: 20;
+      top: clamp(22px, 3.6vh, 42px);
+      left: 5%;
+      right: 5%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .brand-icon {
+      flex-shrink: 0;
+      color: var(--yellow);
+      font-size: 42px;
+      line-height: 1;
+      text-shadow: 0 0 18px #ffe75c66;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: clamp(26px, 4.4vw, 48px);
+      font-weight: 900;
+      font-style: italic;
+      line-height: 1;
+      letter-spacing: .1em;
+      white-space: nowrap;
+      color: #ffcccc;
+      background:
+        linear-gradient(
+          180deg,
+          #ffe6e6 5%,
+          #ff9999 31%,
+          #ff4d4d 45%,
+          #cc0000 51%,
+          #ff6666 78%,
+          #ffcccc
+        );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      -webkit-text-stroke: .6px #ffe75c4d;
+      filter:
+        drop-shadow(0 0 10px #ffe75c99)
+        drop-shadow(0 0 26px #e93adb80);
+    }
+
+    .tagline,
+    .meta,
+    .side-note,
+    .footer-caption,
+    .footer-right,
+    .speed-control {
+      font-family: "Courier New", monospace;
+    }
+
+    .tagline {
+      margin: 9px 0 0;
+      color: #c2add9;
+      font-size: 9px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-shrink: 0;
+    }
+
+    .meta {
+      color: #c5aedf;
+      font-size: 10px;
+      letter-spacing: .14em;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      margin-right: 9px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    .choose-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 8px 13px;
+      border: 1px solid #b08eeb40;
+      border-radius: 999px;
+      background: #100922b3;
+      color: #eee7f8;
+      font-size: 11px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition:
+        background .2s,
+        border-color .2s;
+    }
+
+    .choose-button svg {
+      width: 17px;
+      height: 17px;
+      color: var(--yellow);
+      flex-shrink: 0;
+    }
+
+    .choose-button:hover {
+      background: #211335;
+      border-color: #ffe75c70;
+    }
+
+    .choose-button[aria-busy="true"] {
+      opacity: .65;
+    }
+
+    .asset-status {
+      position: absolute;
+      z-index: 25;
+      top: calc(clamp(22px, 3.6vh, 42px) + 72px);
+      right: 5%;
+      max-width: min(340px, calc(100% - 40px));
+      margin: 0;
+      padding: 10px 13px;
+      border: 1px solid #75f5ff26;
+      border-radius: 12px;
+      background: #100921ed;
+      color: #d2f5f3;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .asset-status:empty {
+      display: none;
+    }
+
+    .asset-status.is-error {
+      color: #ffe7ae;
+      border-color: #ffe75c45;
+    }
+
+    .side-note {
+      position: absolute;
+      z-index: 12;
+      top: 50%;
+      right: 2.7%;
+      transform: translateY(-50%);
+      writing-mode: vertical-rl;
+      color: #ad94c9;
+      font-size: 9px;
+      letter-spacing: .3em;
+    }
+
+    /* ================= CONTROLES INFERIORES ================= */
+
+    .footer {
+      position: absolute;
+      z-index: 20;
+      left: 5%;
+      right: 5%;
+      bottom: max(24px, env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .footer-caption {
+      margin: 0;
+      color: var(--yellow);
+      font-size: 10px;
+      letter-spacing: .13em;
+    }
+
+    .footer-caption span {
+      display: block;
+      margin-top: 8px;
+      color: #bcabc9;
+      font-size: 11px;
+      letter-spacing: 0;
+    }
+
+    .footer-right {
+      margin: 0;
+      color: #b8a5c9;
+      font-size: 10px;
+      text-align: right;
+      letter-spacing: .15em;
+      grid-column: 3;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      min-height: 54px;
+      padding: 10px 16px;
+      border: 1px solid #b08eeb40;
+      border-radius: 999px;
+      background: #0c071dcc;
+      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 0 25px #83296f22;
+      grid-column: 2;
+    }
+
+    .pause-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-width: 97px;
+      min-height: 32px;
+      padding: 6px 9px;
+      border: 0;
+      border-radius: 20px;
+      background: transparent;
+      color: #f2eaff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+
+    .pause-button:hover {
+      background: #75f5ff14;
+    }
+
+    #pause-icon {
+      color: var(--cyan);
+      font-size: 12px;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding-left: 16px;
+      border-left: 1px solid #ffffff24;
+    }
+
+    .speed-control label {
+      color: #b9a8cc;
+      font-size: 9px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .speed-control input {
+      width: 88px;
+      height: 24px;
+      margin: 0;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+
+    .speed-control output {
+      min-width: 4ch;
+      color: var(--cyan);
+      font-size: 11px;
+      text-align: right;
+    }
+
+    button:focus-visible,
+    input:focus-visible {
+      outline: 2px solid var(--yellow);
+      outline-offset: 5px;
+    }
+
+    .noscript {
+      position: absolute;
+      z-index: 30;
+      top: 20%;
+      width: 100%;
+      padding: 16px;
+      text-align: center;
+      color: var(--yellow);
+    }
+
+    /* ================= PAUSA Y ACCESIBILIDAD ================= */
+
+    @keyframes turn {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes breathe {
+      from {
+        transform: scale(.94);
+        opacity: .78;
+      }
+
+      to {
+        transform: scale(1.08);
+        opacity: 1;
+      }
+    }
+
+    .scene.is-paused *,
+    .scene.is-paused *::before,
+    .scene.is-paused *::after {
+      animation-play-state: paused !important;
+    }
+
+    .scene.is-paused .status-dot {
+      background: var(--yellow);
+      box-shadow: 0 0 8px #ffe75c66;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+      }
+    }
+
+    /* ================= DISEÑO RESPONSIVO ================= */
+
+    @media (max-width: 760px) {
+      .meta,
+      .side-note,
+      .footer-caption,
+      .footer-right {
+        display: none;
+      }
+
+      .footer {
+        display: flex;
+        justify-content: center;
+      }
+
+      .brand-icon {
+        font-size: 32px;
+      }
+    }
+
+    @media (max-width: 580px) {
+      .choose-button .button-label {
+        display: none;
+      }
+
+      .choose-button {
+        width: 38px;
+        padding: 8px;
+      }
+
+      .header-actions {
+        gap: 0;
+      }
+    }
+
+    @media (max-width: 420px) {
+      .header {
+        left: 20px;
+        right: 20px;
+        gap: 12px;
+      }
+
+      .brand {
+        gap: 10px;
+      }
+
+      .tagline {
+        font-size: 8px;
+      }
+
+      .footer {
+        left: 12px;
+        right: 12px;
+      }
+
+      .controls {
+        gap: 7px;
+        padding: 8px 10px;
+      }
+
+      .pause-button {
+        min-width: 88px;
+      }
+
+      .speed-control {
+        gap: 7px;
+        padding-left: 10px;
+      }
+
+      .speed-control input {
+        width: 62px;
+      }
+    }
+
+    @media (max-height: 460px) {
+      .header {
+        top: 14px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .brand-icon {
+        font-size: 28px;
+      }
+
+      .tagline,
+      .meta,
+      .side-note {
+        display: none;
+      }
+
+      .moon {
+        top: 50px;
+        width: 68px;
+      }
+
+      .asset-status {
+        top: 64px;
+      }
+
+      .footer {
+        bottom: max(12px, env(safe-area-inset-bottom));
+      }
+
+      .controls {
+        min-height: 44px;
+        padding: 6px 12px;
+      }
+    }
+
+    /* ================= MENSAJES Y RAMO INTERACTIVO ================= */
+
+    .portal {
+      left: var(--orbit-x, 39%);
+      top: var(--orbit-y, 51%);
+    }
+
+    .flower {
+      display: block;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: inherit;
+      appearance: none;
+      pointer-events: auto;
+      cursor: pointer;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .flower-float, .flower-tilt, .flower-turn { display: block; }
+    .flower:disabled { cursor: default; }
+    .flower.is-collecting, .flower.is-collected { pointer-events: none; }
+    .flower.is-collected { perspective: none; will-change: auto; }
+    .flower:not(:disabled):hover .flower-image,
+    .flower:not(:disabled):focus-visible .flower-image {
+      filter: drop-shadow(0 0 13px #ffe75caa) brightness(1.12);
+    }
+    .flower.is-collecting .flower-image {
+      filter: drop-shadow(0 13px 10px #08021080)
+              drop-shadow(0 0 15px #ffd95370) brightness(1.06);
+    }
+
+    .collect-instruction {
+      position: absolute;
+      z-index: 16;
+      top: calc(clamp(22px, 3.6vh, 42px) + 88px);
+      left: 5%;
+      margin: 0;
+      color: #e8d9ef;
+      font-size: 20px;
+      line-height: 1.6;
+      max-width: 60%; /* Evita que el texto invada el lado derecho donde están los botones */
+      pointer-events: none;
+    }
+    .collect-instruction span {
+      display: block;
+      margin-top: 8px;
+      color: #cdbcdd;
+      font: 22px/1.5 "Courier New", monospace;
+      letter-spacing: .04em;
+    }
+    .collect-instruction b { color: var(--yellow); font-weight: 600; }
+
+    #flower-transit {
+      position: absolute;
+      inset: 0;
+      z-index: 19;
+      pointer-events: none;
+    }
+
+    .bouquet-area {
+      position: absolute;
+      z-index: 16;
+      top: 53%;
+      right: 5%;
+      width: clamp(210px, 25vw, 350px);
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .bouquet-count {
+      margin: 6px 0 0;
+      color: #c5afd1;
+      font: 10px/1.4 "Courier New", monospace;
+      letter-spacing: .09em;
+    }
+    .reset-bouquet {
+      flex-shrink: 0;
+      width: 38px;
+      height: 38px;
+      border: 1px solid #d7a87360;
+      border-radius: 50%;
+      background: #201124a6;
+      color: #ffe5b3;
+      font-size: 24px;
+      cursor: pointer;
+      pointer-events: auto;
+      transition: background .2s, opacity .2s;
+    }
+    .reset-bouquet:hover { background: #59304a; }
+    .reset-bouquet:disabled { opacity: .25; cursor: default; }
+    .bouquet-stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 300 / 360;
+      margin-top: 8px;
+      isolation: isolate;
+    }
+    .bouquet-stage::before {
+      content: "";
+      position: absolute;
+      inset: -8% -18% 4%;
+      z-index: -1;
+      background: radial-gradient(ellipse, #ffcf7014, #ee44b90a 46%, transparent 70%);
+      opacity: .45;
+      transition: opacity 1s;
+    }
+    .bouquet-area.has-flowers .bouquet-stage::before { opacity: 1; }
+    .bouquet-area.is-complete .bouquet-stage::before {
+      background: radial-gradient(ellipse, #ffd77733, #ee44b914 46%, transparent 70%);
+    }
+    .bouquet-art, .bouquet-flowers {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .bouquet-back { z-index: 0; filter: drop-shadow(0 14px 13px #07010c80); }
+    .bouquet-stems { z-index: 1; }
+    .bouquet-flowers { z-index: 2; }
+    .bouquet-front { z-index: 3; }
+    .bouquet-signature {
+      position: absolute;
+      bottom: -9px;
+      width: 100%;
+      margin: 0;
+      color: #d9b4d0;
+      font: italic 12px/1.5 Georgia, serif;
+      text-align: center;
+    }
+
+    .love-modal {
+      position: fixed;
+      left: clamp(180px, 39vw, calc(100vw - 180px));
+      top: 46%;
+      width: min(320px, calc(100vw - 32px));
+      max-height: calc(100dvh - 32px);
+      margin: 0;
+      padding: 26px 24px 22px;
+      overflow-y: auto;
+      transform: translate(-50%, -50%);
+      border: 1px solid #efbcb671;
+      border-radius: 22px;
+      background: radial-gradient(ellipse at top, #61325552, transparent 70%), #1b0d27f7;
+      color: #fbeff6;
+      text-align: center;
+      box-shadow: 0 22px 70px #02000db3, 0 0 45px #e83caa26, inset 0 1px 0 #ffffff14;
+    }
+    .love-modal::backdrop { background: #06001030; }
+    .love-modal[open] { animation: love-appear .28s ease-out; }
+    .scene.is-paused .love-modal[open] { animation: none; }
+    .love-close {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #d3b5d1;
+      font-size: 25px;
+      cursor: pointer;
+    }
+    .love-close:hover { background: #ffffff0b; }
+    .love-heart { color: #ffbdbe; font-size: 27px; text-shadow: 0 0 20px #fa76b76b; }
+    .love-kicker { margin: 12px 0; color: #edca99; font: 9px/1.5 "Courier New", monospace; letter-spacing: .18em; }
+    .love-modal h2 { margin: 0 0 12px; font: italic 27px/1.16 Georgia, serif; }
+    .love-message { margin: 0 0 22px; color: #decede; font-size: 13px; line-height: 1.7; }
+    .love-continue {
+      min-height: 42px;
+      width: 100%;
+      padding: 10px 15px;
+      border: 1px solid #ffd69d6b;
+      border-radius: 999px;
+      background: linear-gradient(110deg, #724150, #4b254a);
+      color: #ffedc9;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .love-continue:hover { background: #7f4565; }
+    @keyframes love-appear {
+      from { opacity: 0; transform: translate(-50%, -47%) scale(.96); }
+      to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+
+    /* ================= NAV BAR ================= */
+
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .nav-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 6px 14px;
+      border: 1px solid #b08eeb40;
+      border-radius: 999px;
+      background: #100922b3;
+      color: #eee7f8;
+      font-family: Georgia, serif;
+      font-style: italic;
+      font-size: 13px;
+      white-space: nowrap;
+      cursor: pointer;
+      transition:
+        background .2s,
+        border-color .2s,
+        transform .15s;
+    }
+
+    .nav-button:hover { background: #211335; border-color: #ffe75c70; }
+    .nav-button:active { transform: translateY(1px); }
+    .nav-button .nav-icon { color: var(--yellow); }
+    .nav-button--proposal {
+      background: linear-gradient(110deg, #5c2e3a, #3d1f46);
+      border-color: #ff48d866;
+    }
+    .nav-button--proposal:hover { background: #6b3a52; }
+
+    @media (max-width: 700px) {
+      .header { align-items: flex-start; }
+      .page-nav { flex-direction: column; align-items: flex-end; gap: 10px; }
+      .collect-instruction { top: 155px; }
+    }
+
+    /* ================= MODALES: CARTA, MÚSICA Y PEDIDO ================= */
+
+    .letter-modal,
+    .music-modal,
+    .proposal-modal {
+      width: min(540px, calc(100vw - 32px));
+      max-height: calc(100dvh - 32px);
+      margin: auto;
+      padding: 30px 30px 26px;
+      overflow-y: auto;
+      border: 1px solid #efbcb671;
+      border-radius: 24px;
+      background:
+        radial-gradient(ellipse at top, #61325552, transparent 70%),
+        #1b0d27f7;
+      color: #fbeff6;
+      text-align: center;
+      box-shadow:
+        0 22px 70px #02000db3,
+        0 0 45px #e83caa26,
+        inset 0 1px 0 #ffffff14;
+    }
+
+    .letter-modal::backdrop,
+    .music-modal::backdrop,
+    .proposal-modal::backdrop { background: #06001030; }
+
+    .proposal-modal {
+      overflow: hidden; /* Evita que aparezca el scroll al moverse el botón */
+      min-height: 420px; /* Da espacio suficiente para que escape el botón No */
+    }
+
+    .letter-modal[open],
+    .music-modal[open] { animation: simple-appear .28s ease-out; }
+
+    .proposal-modal[open] {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: simple-appear .28s ease-out;
+    }
+
+    @keyframes simple-appear {
+      from { opacity: 0; transform: scale(.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .scene.is-paused .letter-modal[open],
+    .scene.is-paused .music-modal[open],
+    .scene.is-paused .proposal-modal[open] { animation: none; }
+
+    .modal-close {
+      position: absolute;
+      top: 7px;
+      right: 7px;
+      width: 38px;
+      height: 38px;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: #d3b5d1;
+      font-size: 25px;
+      cursor: pointer;
+    }
+    .modal-close:hover { background: #ffffff0b; }
+
+    .modal-kicker {
+      margin: 12px 0;
+      color: #edca99;
+      font: 9px/1.5 "Courier New", monospace;
+      letter-spacing: .18em;
+    }
+
+    .letter-modal h2,
+    .music-modal h2,
+    .proposal-modal h2 {
+      margin: 0 0 14px;
+      font: italic 27px/1.16 Georgia, serif;
+    }
+
+    .letter-body {
+      text-align: left;
+      color: #decede;
+      font: 15px/1.85 Georgia, serif;
+    }
+
+    .letter-body p { margin: 0 0 15px; }
+    .letter-sign { text-align: right; font-style: italic; color: #ffd9a8; }
+
+    .music-embed {
+      margin-top: 14px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #0c071dcc;
+      aspect-ratio: 16 / 9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .music-embed iframe { width: 100%; height: 100%; border: 0; display: block; }
+    .music-empty { color: #ad94c9; font: italic 13px/1.6 Georgia, serif; padding: 0 20px; }
+
+    .proposal-heart {
+      color: #ffbdbe;
+      font-size: 48px;
+      text-shadow: 0 0 30px #fa76b76b;
+    }
+
+    .proposal-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    [hidden] { display: none !important; }
+
+    .proposal-yes,
+    .proposal-no {
+      min-height: 46px;
+      padding: 10px 28px;
+      border-radius: 999px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    
+    .proposal-yes {
+      transition: transform .2s, background .2s;
+    }
+    
+    .proposal-no {
+      transition: transform .05s ease-out, background .2s;
+    }
+
+    .proposal-yes {
+      border: 1px solid #ffd69d6b;
+      background: linear-gradient(110deg, #724150, #4b254a);
+      color: #ffedc9;
+    }
+    .proposal-yes:hover { background: #7f4565; }
+
+    .proposal-no {
+      border: 1px solid #d7a87360;
+      background: #1d0f27ed;
+      color: #dfcdbd;
+      position: relative;
+    }
+    .proposal-no::before {
+      content: "";
+      position: absolute;
+      top: -30px; right: -30px; bottom: -30px; left: -30px;
+      z-index: 1;
+    }
+    .proposal-no:hover { background: #59304a; }
+
+    .proposal-result {
+      margin: 24px 0 0;
+      color: #ffe9bd;
+      font: italic 18px/1.6 Georgia, serif;
+    }
+
+    .petals {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 90;
+    }
+
+    .petals span {
+      position: absolute;
+      top: -7%;
+      width: 12px;
+      height: 18px;
+      border-radius: 60% 60% 60% 60% / 90% 90% 90% 90%;
+      opacity: .85;
+      animation: petal-fall linear infinite;
+    }
+
+    @keyframes petal-fall {
+      0% { transform: translate3d(0, 0, 0) rotate(0deg); opacity: 0; }
+      8% { opacity: .9; }
+      100% {
+        transform: translate3d(var(--drift, 0px), 108vh, 0) rotate(720deg);
+        opacity: .75;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .letter-modal, .music-modal, .proposal-modal { padding: 26px 20px 22px; }
+      .letter-modal h2, .music-modal h2, .proposal-modal h2 { font-size: 24px; }
+      .proposal-yes, .proposal-no { padding: 10px 20px; font-size: 14px; }
+    }
+
+    @media (max-width: 760px) and (orientation: portrait) {
+      .collect-instruction { top: 160px; left: 6%; font-size: 18px; }
+      .collect-instruction span { font-size: 17px; }
+      .bouquet-area {
+        top: auto;
+        right: 5%;
+        bottom: max(108px, calc(env(safe-area-inset-bottom) + 84px));
+        width: min(47vw, 23vh);
+        transform: none;
+      }
+      .bouquet-count { font-size: 9px; margin-top: 4px; letter-spacing: .02em; }
+      .reset-bouquet { width: 34px; height: 34px; font-size: 22px; }
+      .bouquet-stage { margin-top: 4px; }
+      .bouquet-signature { font-size: 11px; }
+      .love-modal { left: 50%; top: 40%; }
+      .moon { right: 7%; top: 110px; width: 65px; opacity: .75; }
+    }
+    @media (max-width: 760px) and (max-height: 700px) and (orientation: portrait) {
+      body { overflow-y: auto; }
+      .scene { min-height: 740px; }
+      .bouquet-area { width: 170px; }
+    }
+    @media (max-height: 500px) and (orientation: landscape) {
+      .bouquet-area { top: 50%; width: min(25vw, 47vh); right: 4%; }
+      .bouquet-count { font-size: 8px; margin-top: 3px; }
+      .reset-bouquet { width: 32px; height: 32px; font-size: 21px; }
+      .bouquet-signature { font-size: 10px; }
+      .collect-instruction { top: 110px; font-size: 16px; }
+      .collect-instruction span { display: none; }
+      .love-modal { padding: 18px 22px; top: 50%; }
+      .love-heart { display: none; }
+      .love-kicker { margin: 3px 0 9px; }
+      .love-modal h2 { font-size: 24px; }
+      .love-message { margin-bottom: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .love-modal[open] { animation: none; }
+      .vortex, .core, .portal::before,
+      .universe-logo,
+      .flower-float, .flower-tilt, .flower-turn, .watermark,
+      .petals span { animation: none !important; }
+    }
+
+    /* Sello de agua en movimiento: fotograma panorámico que se desliza
+   de derecha a izquierda sin apagar el diseño. La foto es muy ancha,
+   por eso el barrido lateral tiene recorrido de sobra. */
+    .watermark {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, #09031326, #0903137a),
+        url("./assets/images/foto.png") center / cover no-repeat;
+      mix-blend-mode: screen;
+      opacity: .3;
+      filter: saturate(.75) brightness(1.05);
+      animation: film-drift 64s ease-in-out infinite alternate;
+    }
+
+    @keyframes film-drift {
+      from { background-position: 0% center; }
+      to { background-position: 100% center; }
+    }
+
+    /* Mantiene el acercamiento dentro del espacio del ramo. */
+    .bouquet-viewport {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .bouquet-camera {
+      --focus-x: 50%;
+      --focus-y: 38%;
+
+      position: absolute;
+      inset: 0;
+      transform-origin: var(--focus-x) var(--focus-y);
+      transform: translate(0, 0) scale(1);
+      transition: transform 1.8s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .bouquet-camera.is-zoomed {
+      /* Lleva el centro de las flores al centro del encuadre. */
+      transform:
+        translate(
+          calc(50% - var(--focus-x)),
+          calc(50% - var(--focus-y))
+        )
+        scale(2);
+    }
+
+    /* Al completarse, el ramo se desplaza al centro de la pantalla.
+       El título del ramo y los controles se mantienen en su sitio. */
+    .bouquet-stage {
+      will-change: transform;
+      transition: transform 1.8s cubic-bezier(.22, 1, .36, 1);
+    }
+
+    .bouquet-stage.is-centered {
+      transform: translate(var(--stage-x, 0px), var(--stage-y, 0px));
+    }
+
+    /* El zoom se libera del marco: las flores crecen por fuera
+       del recuadro y se quita el halo que delataba el área del ramo. */
+    .bouquet-stage.is-centered .bouquet-viewport {
+      overflow: visible;
+    }
+
+    .bouquet-stage.is-centered::before {
+      opacity: 0;
+    }
+
+  </style>
+</head>
+
+<body>
+  <main class="scene is-paused"
+        id="scene"
+        aria-labelledby="page-title">
+
+    <div class="watermark" aria-hidden="true"></div>
+
+    <p class="sr-only">
+      Un jardín espacial retrowave con diez flores amarillas
+      que flotan y giran alrededor de un portal de color cian y magenta.
+      El universo gira lentamente alrededor del emblema de
+      Conquistadores de la Iglesia Adventista del Séptimo Día.
+      Elige cada flor para leer un mensaje de amor y formar un ramo a la derecha.
+      Al fondo aparecen estrellas, una luna y una cuadrícula de neón.
+    </p>
+
+    <div class="universe" aria-hidden="true">
+      <div class="nebula" aria-hidden="true"></div>
+      <canvas id="space" aria-hidden="true"></canvas>
+      <div class="moon" aria-hidden="true"></div>
+
+      <div class="horizon" aria-hidden="true"></div>
+
+      <div class="floor" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             viewBox="0 0 1000 360"
+             preserveAspectRatio="none"
+             fill="none">
+          <path id="grid-rays"
+                stroke="#42efff"
+                stroke-opacity=".34"
+                stroke-width="1"/>
+
+          <path id="grid-rows"
+                stroke="#ee42cd"
+                stroke-opacity=".62"
+                stroke-width="1"/>
+        </svg>
+      </div>
+
+      <div class="portal" aria-hidden="true">
+        <div class="vortex vortex-back"></div>
+        <div class="vortex"></div>
+        <div class="disc"></div>
+        <div class="core"></div>
+      </div>
+    </div>
+
+    <div class="universe-logo" aria-hidden="true">
+      <img src="./assets/images/conquistadores.png" alt="" draggable="false">
+    </div>
+
+
+    <!-- Las flores son botones: clic, toque o Enter para recogerlas. -->
+    <div id="flowers" role="group" aria-label="Flores amarillas para tu ramo"></div>
+    <div id="flower-transit" aria-hidden="true"></div>
+
+    <p class="collect-instruction" id="collect-instruction">
+      <b>Elige una flor.</b> Descubre lo que siento por ti.
+      <span>Un mensaje, un ramo para ti.</span>
+    </p>
+
+    <section class="bouquet-area" id="bouquet-area" aria-label="Ramo de flores">
+
+      <div class="bouquet-stage" id="bouquet-stage" aria-hidden="true">
+        <div class="bouquet-viewport">
+          <div class="bouquet-camera" id="bouquet-camera">
+
+        <svg class="bouquet-art bouquet-back" viewBox="0 0 300 360" fill="none">
+          <defs>
+            <linearGradient id="paper-back" x1="25" y1="100" x2="234" y2="322" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f4dfc0"/><stop offset=".45" stop-color="#d7ad91"/><stop offset="1" stop-color="#805163"/>
+            </linearGradient>
+            <linearGradient id="tissue" x1="64" y1="88" x2="211" y2="237" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f9dbe5" stop-opacity=".82"/><stop offset="1" stop-color="#c288a9" stop-opacity=".38"/>
+            </linearGradient>
+          </defs>
+          <path d="M29 98L82 78L148 105L216 74L275 102L204 258L150 348L93 262Z"
+                fill="url(#paper-back)" stroke="#fae0be" stroke-opacity=".65"/>
+          <path d="M45 112L78 64L121 100L153 70L190 104L232 72L254 120L183 280L150 318L114 270Z"
+                fill="url(#tissue)" stroke="#fff0eb" stroke-opacity=".4"/>
+          <path d="M30 99L150 325L274 102M82 79L149 300L216 75"
+                stroke="#6f4356" stroke-opacity=".22"/>
+        </svg>
+
+        <svg class="bouquet-art bouquet-stems" viewBox="0 0 300 360" fill="none">
+          <g id="bouquet-stems"></g>
+        </svg>
+        <div class="bouquet-flowers" id="bouquet-flowers"></div>
+
+        <svg class="bouquet-art bouquet-front" viewBox="0 0 300 360" fill="none">
+          <defs>
+            <linearGradient id="paper-left" x1="42" y1="160" x2="178" y2="325" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f7e2c1"/><stop offset=".5" stop-color="#d9b08f"/><stop offset="1" stop-color="#ae7781"/>
+            </linearGradient>
+            <linearGradient id="paper-right" x1="249" y1="160" x2="129" y2="313" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f4d7b5"/><stop offset=".48" stop-color="#c99883"/><stop offset="1" stop-color="#9f6277"/>
+            </linearGradient>
+            <linearGradient id="silk" x1="115" y1="264" x2="183" y2="310" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#f8b2c7"/><stop offset=".47" stop-color="#ae446d"/><stop offset=".8" stop-color="#e787b0"/><stop offset="1" stop-color="#732747"/>
+            </linearGradient>
+          </defs>
+          <path d="M38 154Q91 191 169 277L150 348L78 228Z" fill="url(#paper-left)" stroke="#ffeacb" stroke-opacity=".6"/>
+          <path d="M260 152Q207 207 131 279L150 348L225 229Z" fill="url(#paper-right)" stroke="#f7d8b8" stroke-opacity=".6"/>
+          <path d="M45 163Q103 218 151 333M253 163Q202 228 151 333" stroke="#fff2d1" stroke-opacity=".27"/>
+          <path d="M134 284L116 326L134 319L142 332L153 289M153 288L168 330L177 317L194 322L167 279"
+                fill="url(#silk)" stroke="#d98bab" stroke-width=".7"/>
+          <path d="M112 269Q148 284 185 268L179 283Q150 295 119 284Z" fill="url(#silk)"/>
+          <path d="M149 281C119 246 98 258 112 278C121 290 138 285 149 281Z
+                   M154 281C174 247 197 253 189 272C184 286 165 285 154 281Z"
+                fill="url(#silk)" stroke="#f0b3c9" stroke-width="1.2"/>
+          <path d="M117 270Q132 271 146 281M184 266Q173 270 156 281" stroke="#ffd9e5" stroke-opacity=".5"/>
+          <rect x="143" y="274" width="17" height="15" rx="5" transform="rotate(-7 151 281)" fill="url(#silk)" stroke="#f2abc2"/>
+        </svg>
+          </div>
+        </div>
+        <p class="bouquet-signature" id="bouquet-signature"></p>
+      </div>
+    </section>
+    <p class="sr-only" id="bouquet-status" role="status" aria-live="polite" aria-atomic="true"></p>
+
+    <dialog class="love-modal" id="love-modal" aria-labelledby="love-title" aria-describedby="love-message">
+      <button class="love-close" id="love-close" type="button" aria-label="Cerrar mensaje">×</button>
+      <div class="love-heart" aria-hidden="true">♡</div>
+      <h2 id="love-title"></h2>
+      <p class="love-message" id="love-message"></p>
+      <button class="love-continue" id="love-continue" type="button" autofocus>Seguir recogiendo</button>
+    </dialog>
+
+    <dialog class="letter-modal" id="letter-modal" aria-labelledby="letter-title">
+      <button class="modal-close" type="button" aria-label="Cerrar carta">×</button>
+      <h2 id="letter-title">Una carta para ti</h2>
+      <img src="assets/images/couple.jpg" alt="Pareja mirando el cielo" style="width: 100%; max-width: 300px; display: block; margin: 0 auto 20px auto; border-radius: 16px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);">
+      <div class="letter-body">
+        <p>Karina L. M.</p>
+        <p>Te lo digo ahora.</p>
+        <p>Y te lo diré siempre.</p>
+        <p>Quiero quedarme contigo</p>
+        <p>no quiero otra sonrisa que no sea la tuya.</p>
+        <p>No quiero otros abrazos que no sean los tuyos, aunque nunca nos hemos abrazado jajaja...</p>
+        <p>quiero quedarme contigo, por que solo contigo soy feliz.</p>
+        <p class="letter-sign">Con todo mi corazón,<br>quien cada día elige quererte.</p>
+      </div>
+    </dialog>
+
+    <dialog class="music-modal" id="music-modal" aria-labelledby="music-title">
+      <button class="modal-close" type="button" aria-label="Cerrar música">×</button>
+      <p class="modal-kicker">NUESTRA BANDA SONORA</p>
+      <h2 id="music-title">Música para los dos</h2>
+      <div class="music-embed" id="music-embed"></div>
+    </dialog>
+
+    <dialog class="letter-modal" id="warning-modal" aria-labelledby="warning-title">
+      <button class="modal-close" type="button" aria-label="Cerrar advertencia">×</button>
+      <h2 id="warning-title" style="text-align: center;">Espera antes de seguir</h2>
+      <div class="letter-body" style="text-align: center;">
+        <p>Lee esto con atención:</p>
+        <p style="font-size: 1.1em; color: #ffcccc;">Aquí hay una pregunta muy importante y seria.</p>
+        <p>Si estás dispuesta a responder, prosigue.</p>
+        <button class="love-continue" id="warning-continue" type="button" style="margin-top: 30px; margin-bottom: 10px;">Siguiente</button>
+      </div>
+    </dialog>
+
+    <dialog class="proposal-modal" id="proposal-modal" aria-labelledby="proposal-title">
+      <button class="modal-close" id="proposal-close" type="button" aria-label="Cerrar pedido" hidden>×</button>
+      <div class="proposal-heart" id="proposal-heart" aria-hidden="true">♥</div>
+      <p class="modal-kicker" id="proposal-kicker">UNA PREGUNTA IMPORTANTE</p>
+      <h2 id="proposal-title">¿Quieres ser mi novia?</h2>
+      <div class="proposal-actions" id="proposal-actions">
+        <button class="proposal-yes" id="proposal-yes" type="button">¡Sí!</button>
+        <button class="proposal-no" id="proposal-no" type="button">No</button>
+      </div>
+      <p class="proposal-result" id="proposal-result" role="status" hidden>
+        Sabía que dirías que sí. Solo me pregunto por qué decidiste seguir, sobre todo cuando siempre me insistes en que me dé otra oportunidad y deje de escribirte. Piénsalo y me respondes cuando nos veamos en persona.♥
+      </p>
+    </dialog>
+
+
+    <header class="header">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">♥</span>
+
+        <div>
+          <h1 id="page-title">PARA KARINA L.</h1>
+        </div>
+      </div>
+
+      <nav class="page-nav" aria-label="Secciones de la página">
+        <button class="nav-button" type="button" data-open="letter-modal" aria-haspopup="dialog" title="La carta">
+          <span class="nav-icon" aria-hidden="true">✉</span>
+          <span class="nav-text">Una carta par tí</span>
+        </button>
+
+        <button class="nav-button nav-button--proposal" type="button" data-open="warning-modal" aria-haspopup="dialog" title="Un pedido especial">
+          <span class="nav-icon" aria-hidden="true">♥</span>
+          <span class="nav-text">Pregunta Importante</span>
+        </button>
+      </nav>
+    </header>
+
+    <p id="asset-status"
+       class="asset-status"
+       role="status"
+       aria-live="polite"
+       aria-atomic="true"></p>
+
+    <footer class="footer">
+
+      <div class="controls"
+           role="group"
+           aria-label="Controles de animación">
+
+        <button class="pause-button"
+                id="pause"
+                type="button"
+                aria-label="Reanudar animación">
+          <span id="pause-icon" aria-hidden="true">▶</span>
+          <span id="pause-label">Reanudar</span>
+        </button>
+
+
+      </div>
+    </footer>
+
+    <noscript>
+      <p class="noscript">
+        Activa JavaScript para recoger las flores y formar tu ramo.
+      </p>
+    </noscript>
+  </main>
+
+  <audio id="bg-music" src="assets/music/videoplayback.mp4" loop autoplay></audio>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /*
+       * FLOR SVG DE RESPALDO
+       *
+       * Se genera una ilustración botánica con:
+       * - 54 pétalos con nervaduras y sombras.
+       * - 540 semillas distribuidas mediante el ángulo áureo.
+       * - Hojas, tallo y textura superficial.
+       *
+       * Es una aproximación ilustrada. Para reproducir exactamente
+       * una fotografía, utiliza su imagen recortada y transparente.
+       */
+      function createFlowerSVG(seed) {
+        let state = seed >>> 0;
+
+        const random = () => {
+          state = (
+            Math.imul(1664525, state) + 1013904223
+          ) >>> 0;
+
+          return state / 4294967296;
+        };
+
+        const n = value => Number(value.toFixed(2));
+
+        const leafVeins = Array.from(
+          { length: 7 },
+          (_, index) => {
+            const i = index + 1;
+            const x = -19 * i;
+            const y = -5 * i;
+
+            return `
+              <path
+                d="
+                  M${x} ${y}
+                  Q${x - 5} ${y - 15}
+                   ${x - 18} ${y - 29}
+                  M${x} ${y}
+                  Q${x - 16} ${y + 12}
+                   ${x - 29} ${y + 15}
+                "
+                fill="none"
+                stroke="#a9c55b"
+                stroke-width=".9"
+                opacity=".55"
+              />
+            `;
+          }
+        ).join("");
+
+        const leaf = `
+          <path
+            d="
+              M0 0
+              C-40-63-121-77-177-49
+              C-145 17-66 36 0 0Z
+            "
+            fill="url(#leaf)"
+            stroke="#45632b"
+            stroke-width="1.8"
+          />
+          <path
+            d="M0 0 Q-89-10-177-49"
+            fill="none"
+            stroke="#c1c978"
+            stroke-width="2"
+          />
+          ${leafVeins}
+        `;
+
+        let petals = "";
+
+        for (let layer = 0; layer < 2; layer++) {
+          const count = layer ? 24 : 30;
+
+          for (let i = 0; i < count; i++) {
+            const angle =
+              i * 360 / count +
+              (layer ? 6 : 0) +
+              (random() - .5) * 4;
+
+            const length =
+              (layer ? 198 : 219) + random() * 15;
+
+            const width =
+              (layer ? 22 : 25) + random() * 8;
+
+            const bend = (random() - .5) * 18;
+
+            const d = `
+              M-9-63
+              C-24-91
+                ${n(bend - width)}-139
+                ${n(bend - width * .7)}-177
+              C${n(bend - width * .5)}-199
+                ${n(bend - 5)} ${n(-length + 9)}
+                ${n(bend)} ${n(-length)}
+              C${n(bend + 8)} ${n(-length + 14)}
+                ${n(bend + width)}-177
+                ${n(bend + width * .65)}-148
+              C20-108 17-80 9-63
+              Q0-56-9-63Z
+            `;
+
+            let veins = "";
+
+            for (let v = -4; v <= 4; v++) {
+              veins += `
+                <path
+                  d="
+                    M${n(v * 1.4)}-75
+                    C${n(v * 2.9)}-108
+                     ${n(bend + v * 4)}-158
+                     ${n(bend + v * .55)}
+                     ${n(-length + 16 + Math.abs(v) * 5)}
+                  "
+                  fill="none"
+                  stroke="${v % 2 ? "#fff7b3" : "#976510"}"
+                  stroke-width="${v % 2 ? ".9" : ".65"}"
+                  opacity=".34"
+                />
+              `;
+            }
+
+            petals += `
+              <g
+                transform="rotate(${n(angle)})"
+                filter="url(#petal-shadow)">
+
+                <path
+                  d="${d}"
+                  fill="url(#petal)"
+                  stroke="#c99916"
+                  stroke-width=".6"
+                />
+
+                <path
+                  d="${d}"
+                  fill="url(#ridge)"
+                  opacity=".56"
+                />
+
+                ${veins}
+              </g>
+            `;
+          }
+        }
+
+        let seeds = "";
+        const total = 540;
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+
+        for (let i = 0; i < total; i++) {
+          const radius = 73 * Math.sqrt((i + .5) / total);
+          const angle = i * goldenAngle;
+
+          const x = n(Math.cos(angle) * radius);
+          const y = n(Math.sin(angle) * radius);
+          const size = n(1.3 + radius / 73 * 1.3);
+
+          seeds += `
+            <ellipse
+              cx="${x}"
+              cy="${y}"
+              rx="${n(size * .76)}"
+              ry="${size}"
+              transform="
+                rotate(${n(angle * 180 / Math.PI + 90)} ${x} ${y})
+              "
+              fill="url(#${radius < 36 ? "seed-green" : "seed-gold"})"
+              stroke="#33250f"
+              stroke-width=".45"
+            />
+          `;
+        }
+
+        let anthers = "";
+
+        for (let i = 0; i < 64; i++) {
+          anthers += `
+            <g transform="rotate(${i * 360 / 64})">
+              <ellipse
+                cy="-77"
+                rx="2.4"
+                ry="5.5"
+                fill="#b88113"
+              />
+              <circle
+                cy="-81"
+                r="1.7"
+                fill="#efc849"
+              />
+            </g>
+          `;
+        }
+
+        return `
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1024"
+            height="1024"
+            viewBox="-280 -280 560 560">
+
+            <defs>
+              <linearGradient
+                id="petal"
+                x1="15%" y1="100%"
+                x2="70%" y2="0%">
+                <stop stop-color="#b96b06"/>
+                <stop offset=".27" stop-color="#e9aa08"/>
+                <stop offset=".65" stop-color="#ffdb2f"/>
+                <stop offset="1" stop-color="#fff18a"/>
+              </linearGradient>
+
+              <linearGradient id="ridge">
+                <stop
+                  stop-color="#76470b"
+                  stop-opacity=".36"/>
+                <stop
+                  offset=".36"
+                  stop-color="#fff9ba"
+                  stop-opacity=".67"/>
+                <stop
+                  offset=".58"
+                  stop-color="#fff2a0"
+                  stop-opacity="0"/>
+                <stop
+                  offset="1"
+                  stop-color="#87560c"
+                  stop-opacity=".28"/>
+              </linearGradient>
+
+              <linearGradient id="leaf" x2="0" y2="1">
+                <stop stop-color="#67832c"/>
+                <stop offset=".48" stop-color="#354f22"/>
+                <stop offset="1" stop-color="#142c17"/>
+              </linearGradient>
+
+              <linearGradient id="stem">
+                <stop stop-color="#293c1c"/>
+                <stop offset=".5" stop-color="#89984b"/>
+                <stop offset="1" stop-color="#354921"/>
+              </linearGradient>
+
+              <radialGradient id="disk">
+                <stop stop-color="#6a7023"/>
+                <stop offset=".5" stop-color="#52481c"/>
+                <stop offset=".86" stop-color="#4b2a10"/>
+                <stop offset="1" stop-color="#b27613"/>
+              </radialGradient>
+
+              <radialGradient
+                id="seed-gold"
+                cx=".3" cy=".25" r=".8">
+                <stop stop-color="#dbc064"/>
+                <stop offset=".44" stop-color="#9f7c27"/>
+                <stop offset="1" stop-color="#473014"/>
+              </radialGradient>
+
+              <radialGradient
+                id="seed-green"
+                cx=".3" cy=".25" r=".8">
+                <stop stop-color="#b7b55e"/>
+                <stop offset=".5" stop-color="#77762a"/>
+                <stop offset="1" stop-color="#3f441c"/>
+              </radialGradient>
+
+              <filter
+                id="petal-shadow"
+                x="-25%" y="-15%"
+                width="160%" height="145%">
+                <feDropShadow
+                  dx="1.4"
+                  dy="2"
+                  stdDeviation="1.7"
+                  flood-color="#633608"
+                  flood-opacity=".3"
+                />
+              </filter>
+
+              <filter
+                id="texture"
+                x="-5%" y="-5%"
+                width="110%" height="110%"
+                color-interpolation-filters="sRGB">
+
+                <feTurbulence
+                  type="fractalNoise"
+                  baseFrequency=".08 .5"
+                  numOctaves="2"
+                  seed="${seed}"
+                  result="noise"
+                />
+
+                <feColorMatrix
+                  in="noise"
+                  type="saturate"
+                  values="0"
+                  result="mono"
+                />
+
+                <feComposite
+                  in="mono"
+                  in2="SourceGraphic"
+                  operator="in"
+                  result="grain"
+                />
+
+                <feComponentTransfer
+                  in="grain"
+                  result="soft-grain">
+                  <feFuncA type="linear" slope=".18"/>
+                </feComponentTransfer>
+
+                <feBlend
+                  in="SourceGraphic"
+                  in2="soft-grain"
+                  mode="soft-light"
+                />
+              </filter>
+            </defs>
+
+            <g filter="url(#texture)">
+              <path
+                d="M-8 261 C1 181 1 90 8 34"
+                fill="none"
+                stroke="url(#stem)"
+                stroke-width="11"
+                stroke-linecap="round"
+              />
+
+              <g transform="translate(-2 174) rotate(-16)">
+                ${leaf}
+              </g>
+
+              <g transform="translate(7 137) rotate(18) scale(-.83 .83)">
+                ${leaf}
+              </g>
+
+              <g transform="translate(0 -20)">
+                ${petals}
+
+                <circle
+                  r="78"
+                  fill="url(#disk)"
+                  stroke="#805517"
+                  stroke-width="3"
+                />
+
+                ${seeds}
+                ${anthers}
+              </g>
+            </g>
+          </svg>
+        `;
+      }
+
+      function initBloom() {
+        /*
+         * IMAGEN PERSONALIZADA
+         *
+         * Déjalo vacío para usar las flores SVG incluidas.
+         *
+         * Para cargar automáticamente tu imagen:
+         * const FLOWER_IMAGE = "./girasol.png";
+         *
+         * También admite WebP, SVG o una imagen en formato data URL.
+         * Utiliza una flor recortada con fondo transparente.
+         */
+        const FLOWER_IMAGE = "./assets/images/girazol.png";
+
+        /*
+         * MÚSICA PARA LOS DOS
+         *
+         * Pega aquí el código de inserción (<iframe>) de tu playlist
+         * de Spotify o YouTube y aparecerá en el modal "Nuestra música".
+         * Ejemplo Spotify:
+         *   '<iframe src="https://open.spotify.com/embed/playlist/IDTUPLAYLIST" width="100%" height="352" frameborder="0" allow="encrypted-media"></iframe>'
+         */
+        const MUSIC_EMBED_CODE = "";
+
+        const scene = document.querySelector("#scene");
+        const canvas = document.querySelector("#space");
+        const context = canvas.getContext("2d");
+
+        const flowerLayer = document.querySelector("#flowers");
+        const rays = document.querySelector("#grid-rays");
+        const rows = document.querySelector("#grid-rows");
+
+        const pauseButton = document.querySelector("#pause");
+        const pauseLabel = document.querySelector("#pause-label");
+        const pauseIcon = document.querySelector("#pause-icon");
+
+
+
+const transitLayer = document.querySelector("#flower-transit");
+        const bouquetArea = document.querySelector("#bouquet-area");
+        const bouquetStage = document.querySelector("#bouquet-stage");
+        const bouquetCamera = document.querySelector("#bouquet-camera");
+        const bouquetLayer = document.querySelector("#bouquet-flowers");
+        const bouquetStems = document.querySelector("#bouquet-stems");
+        const bouquetStatus = document.querySelector("#bouquet-status");
+        const assetStatus = document.querySelector("#asset-status");
+        const bouquetSignature = document.querySelector("#bouquet-signature");
+        const instruction = document.querySelector("#collect-instruction");
+        const loveModal = document.querySelector("#love-modal");
+        const loveTitle = document.querySelector("#love-title");
+        const loveMessage = document.querySelector("#love-message");
+        const loveContinue = document.querySelector("#love-continue");
+
+        /* Personaliza aquí los 10 mensajes que verá tu persona especial. */
+        const LOVE_MESSAGES = [
+          ["Hola Karina", "Hoy te escribo estas lineas...."],
+          ["Desde que te conoci.", "Algo cambio en mi... Tus sonrisas iluminan mis días"],
+          ["Gracias por ser tú y por aceptar las citas que tuvimos.", "Por estar ahi  y por hacerme sentir cosas hermosas"],
+          ["Me enamore de ti...", "me enamore de tu forma de ser...."],
+          ["Quiero elegirte hoy...", "Y si tú me eliges, me quedo. Lo sé, iremos lento, a tu paso, sin apuros."],
+          ["No busqué esto.", "pero llegó de la forma mas bonita."],
+          ["Tus palabras...", "Me dan calma y cada momento contigo es un regalo...."],
+          ["Si me permites.", "me gustaria seguir caminando a tu lado de una forma mas cercana."],
+          ["Quiero que seas.", "el amor de mi vida, mi conquistadora favorita."],
+          ["Quiero elegirte siempre y en cada momento para reirnos de todo y de nada.", "para llorar juntos cuando la vida nos maltrata."]
+        ];
+
+        /* Coordenadas del ramo en el SVG de 300 × 360. Orden: del fondo al frente. */
+        const BOUQUET_SLOTS = [
+          { x: 134, y: 50, size: 81, angle: -7 },
+          { x: 94, y: 67, size: 79, angle: -18 },
+          { x: 176, y: 55, size: 84, angle: 9 },
+          { x: 101, y: 110, size: 86, angle: -12 },
+          { x: 145, y: 95, size: 91, angle: 4 },
+          { x: 187, y: 109, size: 85, angle: 13 },
+          { x: 88, y: 151, size: 88, angle: -13 },
+          { x: 128, y: 141, size: 93, angle: -6 },
+          { x: 169, y: 151, size: 93, angle: 8 },
+          { x: 143, y: 221, size: 89, angle: -3 }
+        ];
+        const GROW_SECONDS = .62;
+        const FLIGHT_SECONDS = 1.45;
+        let selectedCount = 0;
+        let arrivedCount = 0;
+        let centerX = 0;
+        let centerY = 0;
+        let bouquetBounds = { x: 0, y: 0, width: 0, height: 0 };
+        const flights = new Set();
+
+
+        const preference = window.matchMedia(
+          "(prefers-reduced-motion: reduce)"
+        );
+
+        const TAU = Math.PI * 2;
+        const flowers = [];
+
+        /*
+         * Las posiciones normalizadas permanecen iguales al
+         * redimensionar la ventana: las estrellas no se reorganizan.
+         */
+        /*
+         * Estrellas dentro de una esfera: guardamos una dirección 3D
+         * (dx, dy, dz) y una distancia al centro. Al pintarlas se rotan
+         * sobre el eje X y se proyectan con perspectiva, así el universo
+         * gira de adelante hacia atrás y vuelve por el fondo.
+         */
+        const stars = Array.from({ length: 260 }, () => {
+          const cosY = Math.random() * 2 - 1;
+          const theta = Math.random() * TAU;
+          const ring = Math.sqrt(1 - cosY * cosY);
+          return {
+            dx: ring * Math.cos(theta),
+            dy: cosY,
+            dz: ring * Math.sin(theta),
+            dist: .3 + Math.random() * .78,
+            radius: .35 + Math.random() * 1.1,
+            phase: Math.random() * TAU,
+            cyan: Math.random() > .7
+          };
+        });
+
+        let width = 0;
+        let height = 0;
+        let unit = 0;
+        let starCount = 85;
+
+        let paused = preference.matches;
+        let frameId = 0;
+        let lastTime = null;
+        let elapsed = 0;
+        let speed = 2;
+
+        let activeObjectURL = null;
+        let assetRequest = 0;
+        let statusTimer = 0;
+
+        /*
+         * Se generan solamente tres imágenes SVG reutilizables.
+         * Las diez flores comparten estas variantes.
+         */
+        const fallbackImages = [17, 29, 43].map(seed =>
+          "data:image/svg+xml;charset=utf-8," +
+          encodeURIComponent(createFlowerSVG(seed))
+        );
+
+        const orbits = [
+          { radius: .26, count: 4, velocity: .18 },
+          { radius: .36, count: 3, velocity: -.125 },
+          { radius: .46, count: 3, velocity: .09 }
+        ];
+
+        /* ================= CREACIÓN DE FLORES ================= */
+
+        orbits.forEach((orbit, ring) => {
+          for (let i = 0; i < orbit.count; i++) {
+            const node = document.createElement("button");
+            node.type = "button";
+            node.className = "flower";
+            node.setAttribute("aria-label", `Recoger flor ${flowers.length + 1} y leer un mensaje de amor`);
+            node.setAttribute("aria-haspopup", "dialog");
+            node.setAttribute("aria-controls", "love-modal");
+
+            node.style.setProperty(
+              "--float-duration",
+              `${5.5 + i * .5 + ring * .6}s`
+            );
+
+            node.style.setProperty(
+              "--float-delay",
+              `${-(i * 1.1 + ring * 2.6)}s`
+            );
+
+            node.style.setProperty(
+              "--spin-duration",
+              `${72 + i * 7 + ring * 11}s`
+            );
+
+            node.style.setProperty(
+              "--spin-delay",
+              `${-(i * 7 + ring * 5)}s`
+            );
+
+            node.style.setProperty(
+              "--spin-direction",
+              i % 2 ? "reverse" : "normal"
+            );
+
+            const floating = document.createElement("span");
+            floating.className = "flower-float";
+
+            const tilt = document.createElement("span");
+            tilt.className = "flower-tilt";
+
+            const turning = document.createElement("span");
+            turning.className = "flower-turn";
+
+            const img = document.createElement("img");
+            img.className = "flower-image";
+            img.alt = "";
+            img.draggable = false;
+            img.decoding = "async";
+
+            img.src =
+              fallbackImages[(i + ring) % fallbackImages.length];
+
+            turning.appendChild(img);
+            tilt.appendChild(turning);
+            floating.appendChild(tilt);
+            node.appendChild(floating);
+            flowerLayer.appendChild(node);
+
+            const flower = {
+              node, img, orbit, floating, tilt, turning,
+              id: flowers.length,
+              state: "orbit",
+              slotIndex: -1,
+              baseSize: 100,
+              pose: { x: 0, y: 0, scale: 1 },
+              phase: i * TAU / orbit.count + ring * .7,
+              size: .13 + ((i + ring) % 3) * .015
+            };
+            node.dataset.flowerId = String(flower.id);
+            node.dataset.state = "orbit";
+            node.addEventListener("click", () => collectFlower(flower));
+            flowers.push(flower);
+          }
+        });
+
+
+        /* ================= CLIC, CRECIMIENTO Y VIAJE ================= */
+
+        const mix = (a, b, t) => a + (b - a) * t;
+        const smooth = t => t * t * (3 - 2 * t);
+        const identityMatrix = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+
+        function destination(flower) {
+          const slot = BOUQUET_SLOTS[flower.slotIndex];
+          return {
+            x: bouquetBounds.x + slot.x / 300 * bouquetBounds.width,
+            y: bouquetBounds.y + slot.y / 360 * bouquetBounds.height,
+            size: slot.size / 300 * bouquetBounds.width,
+            angle: slot.angle
+          };
+        }
+
+        function setFlowerState(flower, state) {
+          flower.state = state;
+          flower.node.dataset.state = state;
+        }
+
+        /* Desplaza el ramo al centro de la pantalla sin mover
+           su título ni los controles inferiores. */
+        function centerStage() {
+          const rect = bouquetStage.getBoundingClientRect();
+          const targetX = window.innerWidth / 2 - rect.width / 2;
+          const targetY = window.innerHeight * .47 - rect.height / 2;
+          bouquetStage.style.setProperty("--stage-x", `${targetX - rect.left}px`);
+          bouquetStage.style.setProperty("--stage-y", `${targetY - rect.top}px`);
+          bouquetStage.classList.add("is-centered");
+        }
+
+        function updateBouquet() {
+          bouquetArea.classList.toggle("has-flowers", arrivedCount > 0);
+          const complete = arrivedCount === flowers.length;
+          bouquetArea.classList.toggle("is-complete", complete);
+          bouquetStatus.textContent = complete
+            ? `Ramo completo: ${flowers.length} flores para ti. Puedes volver a formarlo.`
+            : `${arrivedCount} de ${flowers.length} flores en el ramo.`;
+
+          // "complete" ya existe en esta función y solo es true
+          // cuando todas las flores han terminado su viaje.
+          if (complete) {
+            const cx = BOUQUET_SLOTS.reduce(
+              (sum, slot) => sum + slot.x, 0
+            ) / BOUQUET_SLOTS.length;
+
+            const cy = BOUQUET_SLOTS.reduce(
+              (sum, slot) => sum + slot.y, 0
+            ) / BOUQUET_SLOTS.length;
+
+            // Convierte las coordenadas del ramo (300 × 360)
+            // en porcentajes para mantener el enfoque responsivo.
+            bouquetCamera.style.setProperty(
+              "--focus-x", `${cx / 300 * 100}%`
+            );
+
+            bouquetCamera.style.setProperty(
+              "--focus-y", `${cy / 360 * 100}%`
+            );
+          }
+
+          // Al reiniciar el ramo con ↻, también restablece el zoom.
+          bouquetCamera.classList.toggle("is-zoomed", complete);
+          if (complete) centerStage();
+          syncMotion();
+        }
+
+        function resetBouquet() {
+          selectedCount = 0;
+          arrivedCount = 0;
+          flights.clear();
+          
+          const stems = document.querySelector("#bouquet-stems");
+          if (stems) stems.innerHTML = "";
+          
+          bouquetStage.style.removeProperty("--stage-x");
+          bouquetStage.style.removeProperty("--stage-y");
+          bouquetStage.classList.remove("is-centered");
+          
+          flowers.forEach(flower => {
+            setFlowerState(flower, "orbit");
+            flower.slotIndex = -1;
+            flower.node.classList.remove("is-collected", "is-collecting");
+            flower.node.style.left = "";
+            flower.node.style.top = "";
+            flower.node.style.width = `${flower.baseSize}px`;
+            flower.node.style.height = `${flower.baseSize}px`;
+            flower.node.style.zIndex = "";
+            
+            flowerLayer.appendChild(flower.node);
+            
+            flower.floating.style.transform = "";
+            flower.turning.style.transform = "";
+            flower.tilt.style.transform = "";
+            flower.node.style.transform = `translate3d(${flower.pose.x}px, ${flower.pose.y}px, 0) translate(-50%, -50%) rotate(0deg) scale(1)`;
+          });
+          
+          updateBouquet();
+        }
+
+        function openLoveMessage(flower) {
+          // El último mensaje celebra el cierre, sin depender del orden de selección.
+          const message = LOVE_MESSAGES[Math.min(selectedCount - 1, LOVE_MESSAGES.length - 1)];
+          loveTitle.textContent = message[0];
+          loveMessage.textContent = message[1];
+          loveContinue.textContent = selectedCount === flowers.length ? "Contemplar mi ramo" : "Seguir recogiendo";
+          if (!loveModal.open) loveModal.showModal();
+        }
+
+        function collectFlower(flower) {
+          // La reserva inmediata impide duplicados por doble clic o toques rápidos.
+          if (flower.state !== "orbit") return;
+          flower.slotIndex = selectedCount++;
+          setFlowerState(flower, "growing");
+          openLoveMessage(flower);
+
+          /* Capturar las transformaciones actuales evita que la flor salte al pulsarla. */
+          const floatMatrix = new DOMMatrixReadOnly(getComputedStyle(flower.floating).transform);
+          const turnMatrix = new DOMMatrixReadOnly(getComputedStyle(flower.turning).transform);
+          const tiltMatrix = new DOMMatrixReadOnly(getComputedStyle(flower.tilt).transform);
+          flower.inner = {
+            floatY: floatMatrix.m42,
+            angle: Math.atan2(turnMatrix.b, turnMatrix.a) * 180 / Math.PI,
+            tilt: Array.from(tiltMatrix.toFloat64Array())
+          };
+          [flower.floating, flower.tilt, flower.turning].forEach(part => {
+            part.style.animation = "none";
+          });
+          flower.from = { ...flower.pose };
+          flower.travelTime = 0;
+          flower.peakScale = Math.max(flower.from.scale * 1.65, destination(flower).size / flower.baseSize * 1.18);
+          flower.node.disabled = true;
+          flower.node.tabIndex = -1;
+          flower.node.classList.add("is-collecting");
+          flower.node.style.opacity = "1";
+          flower.node.style.zIndex = "1";
+          transitLayer.appendChild(flower.node);
+          flights.add(flower);
+          renderFlight(flower, 0);
+          updateBouquet();
+
+          if (preference.matches) {
+            settleFlower(flower);
+          }
+          // El viaje responde al clic incluso si las órbitas están pausadas.
+          syncMotion();
+        }
+
+        function renderFlight(flower, dt) {
+          flower.travelTime += dt;
+          const total = GROW_SECONDS + FLIGHT_SECONDS;
+          if (flower.travelTime >= total) {
+            settleFlower(flower);
+            return;
+          }
+          const goal = destination(flower);
+          const start = flower.from;
+          let x = start.x;
+          let y = start.y;
+          let scale;
+          let angle = 0;
+
+          if (flower.travelTime < GROW_SECONDS) {
+            const t = flower.travelTime / GROW_SECONDS;
+            // Expansión orgánica con una pequeña sobreoscilación y asentamiento.
+            const back = 1 + 2.1 * Math.pow(t - 1, 3) + 1.1 * Math.pow(t - 1, 2);
+            scale = mix(start.scale, flower.peakScale, back);
+          } else {
+            setFlowerState(flower, "flying");
+            const t = smooth((flower.travelTime - GROW_SECONDS) / FLIGHT_SECONDS);
+            const u = 1 - t;
+            const lift = Math.min(150, Math.max(65, Math.abs(goal.x - start.x) * .25));
+            const c1x = mix(start.x, goal.x, .24);
+            const c1y = Math.max(35, start.y - lift);
+            const c2x = goal.x - Math.min(100, Math.abs(goal.x - start.x) * .23);
+            const c2y = Math.max(35, goal.y - lift * .8);
+            // Curva de Bézier cúbica: despegue suave y llegada tangencial al ramo.
+            x = u ** 3 * start.x + 3 * u ** 2 * t * c1x + 3 * u * t ** 2 * c2x + t ** 3 * goal.x;
+            y = u ** 3 * start.y + 3 * u ** 2 * t * c1y + 3 * u * t ** 2 * c2y + t ** 3 * goal.y;
+            scale = mix(flower.peakScale, goal.size / flower.baseSize, t);
+            angle = goal.angle * t - Math.sin(Math.PI * t) * 10;
+          }
+
+          // La inclinación y el giro orbital se enderezan gradualmente durante el viaje.
+          const unwind = smooth(Math.min(1, flower.travelTime / total));
+          flower.floating.style.transform = `translateY(${flower.inner.floatY * (1 - unwind)}px)`;
+          flower.turning.style.transform = `rotate(${flower.inner.angle * (1 - unwind)}deg)`;
+          flower.tilt.style.transform = `matrix3d(${flower.inner.tilt.map((value, i) => mix(value, identityMatrix[i], unwind)).join(",")})`;
+          flower.node.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) rotate(${angle}deg) scale(${scale})`;
+        }
+
+        function addStem(flower) {
+          const slot = BOUQUET_SLOTS[flower.slotIndex];
+          const ns = "http://www.w3.org/2000/svg";
+          const stem = document.createElementNS(ns, "path");
+          const endX = 146 + (flower.slotIndex % 5) * 3;
+          const start = { x: slot.x, y: slot.y + slot.size * .18 };
+          const mid = { x: mix(slot.x, endX, .6), y: 220 };
+          const end = { x: endX, y: 291 };
+          stem.setAttribute("d", `M${start.x} ${start.y} Q${mid.x} ${mid.y} ${end.x} ${end.y}`);
+          stem.setAttribute("stroke", ["#738745", "#546c3b", "#92a45b"][flower.slotIndex % 3]);
+          stem.setAttribute("stroke-width", "4");
+          stem.setAttribute("stroke-linecap", "round");
+          bouquetStems.appendChild(stem);
+          // Punto a lo largo de la curva cuadrática: ayuda a repartir las hojas sobre la rama.
+          const bezier = t => {
+            const u = 1 - t;
+            return {
+              x: u * u * start.x + 2 * u * t * mid.x + t * t * end.x,
+              y: u * u * start.y + 2 * u * t * mid.y + t * t * end.y
+            };
+          };
+          const greens = ["#526f39", "#768843"];
+          for (let i = 0; i < 4; i++) {
+            const p = bezier(.22 + i * .21);
+            const alt = i % 2 ? -1 : 1;
+            const leaf = document.createElementNS(ns, "path");
+            leaf.setAttribute("d",
+              `M${p.x} ${p.y} ` +
+              `Q${p.x + alt * 25} ${p.y - 22} ${p.x + alt * 31} ${p.y - 11} ` +
+              `Q${p.x + alt * 19} ${p.y + 8} ${p.x} ${p.y}Z`
+            );
+            leaf.setAttribute("fill", greens[i % 2]);
+            bouquetStems.appendChild(leaf);
+          }
+        }
+
+        function settleFlower(flower) {
+          if (!flights.has(flower)) return;
+          flights.delete(flower);
+          setFlowerState(flower, "collected");
+          const slot = BOUQUET_SLOTS[flower.slotIndex];
+          flower.node.classList.remove("is-collecting");
+          flower.node.classList.add("is-collected");
+          [flower.floating, flower.tilt, flower.turning].forEach(part => {
+            part.style.transform = "none";
+          });
+          // Posiciones porcentuales: el ramo conserva su forma al cambiar de tamaño.
+          flower.node.style.left = `${slot.x / 3}%`;
+          flower.node.style.top = `${slot.y / 3.6}%`;
+          flower.node.style.width = `${slot.size / 3}%`;
+          flower.node.style.height = `${slot.size / 3.6}%`;
+          flower.node.style.transform = `translate(-50%, -50%) rotate(${slot.angle}deg)`;
+          flower.node.style.zIndex = String(flower.slotIndex + 1);
+          bouquetLayer.appendChild(flower.node);
+          addStem(flower);
+          arrivedCount++;
+          updateBouquet();
+        }
+
+        document.querySelector("#love-close").addEventListener("click", () => loveModal.close());
+        loveContinue.addEventListener("click", () => loveModal.close());
+        // Escape y el confinamiento del foco los gestiona el elemento dialog nativo.
+        let backdropPointer = false;
+        function outsideDialog(event) {
+          const rect = loveModal.getBoundingClientRect();
+          return event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom;
+        }
+        loveModal.addEventListener("pointerdown", event => {
+          backdropPointer = event.target === loveModal && outsideDialog(event);
+        });
+        loveModal.addEventListener("click", event => {
+          if (backdropPointer && event.target === loveModal && outsideDialog(event)) loveModal.close();
+          backdropPointer = false;
+        });
+        loveModal.addEventListener("close", () => {
+          const next = flowers.find(flower => flower.state === "orbit");
+          if (next) next.node.focus({ preventScroll: true });
+        });
+
+        /* ================= NAV BAR Y MODALES EXTRA ================= */
+
+        const musicEmbed = document.querySelector("#music-embed");
+        const proposalModal = document.querySelector("#proposal-modal");
+        const proposalActions = document.querySelector("#proposal-actions");
+        const proposalResult = document.querySelector("#proposal-result");
+        const proposalYes = document.querySelector("#proposal-yes");
+        const proposalNo = document.querySelector("#proposal-no");
+        const proposalClose = document.querySelector("#proposal-close");
+        const proposalHeart = document.querySelector("#proposal-heart");
+        const proposalKicker = document.querySelector("#proposal-kicker");
+        const proposalTitle = document.querySelector("#proposal-title");
+
+        document.querySelectorAll("[data-open]").forEach(button => {
+          button.addEventListener("click", () => {
+            const modal = document.getElementById(button.dataset.open);
+            if (!modal || modal.open) return;
+
+            if (modal.id === "music-modal" && !musicEmbed.innerHTML.trim()) {
+              if (MUSIC_EMBED_CODE) {
+                musicEmbed.innerHTML = MUSIC_EMBED_CODE;
+              } else {
+                musicEmbed.innerHTML =
+                  '<p class="music-empty">Todavía no he conectado nuestra música. ' +
+                  'Pásame el enlace de tu playlist y lo pongo aquí.</p>';
+              }
+            }
+
+            modal.showModal();
+          });
+        });
+
+        document.querySelectorAll(".modal-close").forEach(button => {
+          button.addEventListener("click", () => {
+            button.closest("dialog").close();
+          });
+        });
+
+        const warningContinue = document.querySelector("#warning-continue");
+        const warningModal = document.querySelector("#warning-modal");
+        if (warningContinue && warningModal) {
+          warningContinue.addEventListener("click", () => {
+            warningModal.close();
+            proposalModal.showModal();
+          });
+        }
+
+        // Los pedidos se recargan cada vez que se cierra el modal.
+        proposalModal.addEventListener("close", () => {
+          proposalActions.hidden = false;
+          proposalResult.hidden = true;
+          proposalClose.hidden = true;
+          proposalHeart.hidden = false;
+          proposalKicker.hidden = false;
+          proposalTitle.hidden = false;
+          proposalNo.style.transform = "";
+          proposalYes.style.transform = "";
+          dilemma = 0;
+        });
+
+        // "No" huye de verdad: el "¡Sí!" va creciendo poco a poco.
+        let dilemma = 0;
+        const flee = () => {
+          dilemma++;
+          const range = Math.min(150, 40 + dilemma * 12);
+          proposalNo.style.transform =
+            `translate(${(Math.random() * 2 - 1) * range}px, ` +
+            `${(Math.random() * 2 - 1) * range}px) ` +
+            `rotate(${Math.random() * 40 - 20}deg)`;
+          proposalYes.style.transform =
+            `scale(${Math.min(1.7, 1 + dilemma * .13)})`;
+        };
+        ["mouseenter", "touchstart", "click"].forEach(event =>
+          proposalNo.addEventListener(event, flee, { passive: true })
+        );
+
+        proposalYes.addEventListener("click", () => {
+          proposalActions.hidden = true;
+          proposalHeart.hidden = true;
+          proposalKicker.hidden = true;
+          proposalTitle.hidden = true;
+          proposalResult.hidden = false;
+          proposalClose.hidden = false;
+          celebrate();
+        });
+
+        // Prevenir que se cierre con la tecla Escape antes de responder
+        proposalModal.addEventListener("cancel", (e) => {
+          if (proposalResult.hidden) {
+            e.preventDefault();
+          }
+        });
+
+        function celebrate() {
+          if (preference.matches) return;
+
+          const flare = 46;
+          const colors = ["#ffe75c", "#ff9ecf", "#ff48d8", "#75f5ff", "#fff0c2"];
+          const petalsLayer = document.createElement("div");
+          petalsLayer.className = "petals";
+
+          for (let i = 0; i < flare; i++) {
+            const petal = document.createElement("span");
+            petal.style.left = `${Math.random() * 100}%`;
+            petal.style.background = colors[i % colors.length];
+            petal.style.animationDuration = `${4 + Math.random() * 4}s`;
+            petal.style.animationDelay = `${Math.random() * 3}s`;
+            petal.style.setProperty(
+              "--drift",
+              `${Math.round(Math.random() * 140 - 70)}px`
+            );
+            petalsLayer.appendChild(petal);
+          }
+
+          document.body.appendChild(petalsLayer);
+          setTimeout(() => petalsLayer.remove(), 12000);
+        }
+
+        /* ================= PUNTO DE FUGA ================= */
+
+        let rayPath = "";
+
+        for (let i = -16; i <= 16; i++) {
+          rayPath += `M500 0L${500 + i * 125} 360`;
+        }
+
+        rays.setAttribute("d", rayPath);
+
+        /* ================= TAMAÑO RESPONSIVO ================= */
+
+        function resize() {
+          const rect = scene.getBoundingClientRect();
+
+          const previousWidth = width || rect.width;
+          const previousHeight = height || rect.height;
+          width = rect.width;
+          height = rect.height;
+
+          const area = bouquetArea.getBoundingClientRect();
+          const stage = bouquetStage.getBoundingClientRect();
+          bouquetBounds = { x: stage.left - rect.left, y: stage.top - rect.top,
+                            width: stage.width, height: stage.height };
+          const portrait = window.matchMedia("(max-width: 760px) and (orientation: portrait)").matches;
+          if (portrait) {
+            const top = instruction.getBoundingClientRect().bottom - rect.top + 17;
+            const bottom = area.top - rect.top - 18;
+            centerX = width * .48;
+            centerY = (top + bottom) / 2;
+            unit = Math.min(width * .82, Math.max(120, bottom - top) * .83);
+          } else {
+            centerX = width * .39;
+            centerY = height * .51;
+            unit = Math.min(width * .55, height * (height < 500 ? .56 : .68),
+                            (area.left - rect.left - centerX - 18) * 1.8);
+          }
+          scene.style.setProperty("--orbit-x", `${centerX}px`);
+          scene.style.setProperty("--orbit-y", `${centerY}px`);
+          flights.forEach(flower => {
+            flower.from.x *= width / previousWidth;
+            flower.from.y *= height / previousHeight;
+          });
+
+          scene.style.setProperty("--unit", `${unit}px`);
+
+          scene.style.setProperty(
+            "--float-amplitude",
+            `${Math.max(2, Math.min(7, unit * .009))}px`
+          );
+
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+          canvas.width = Math.round(width * dpr);
+          canvas.height = Math.round(height * dpr);
+
+          if (context) {
+            context.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+
+          starCount = Math.min(
+            stars.length,
+            Math.max(85, Math.round(width * height / 5800))
+          );
+
+          flowers.forEach(flower => {
+            if (flower.state !== "orbit") return;
+            const size = Math.max(100, unit * flower.size * 1.6);
+            flower.baseSize = size;
+            flower.node.style.width = `${size}px`;
+            flower.node.style.height = `${size}px`;
+          });
+
+          render(elapsed);
+          flights.forEach(flower => renderFlight(flower, 0));
+
+          if (bouquetStage.classList.contains("is-centered")) {
+            centerStage();
+          }
+        }
+
+        /* ================= ESTRELLAS Y PARTÍCULAS ================= */
+
+        function paintStars(time) {
+          if (!context) return;
+
+          context.clearRect(0, 0, width, height);
+
+          /*
+           * Giro 3D de adelante hacia atrás: giramos la esfera de estrellas
+           * sobre el eje X. Lo de arriba se va al fondo y lo de abajo se
+           * acerca al frente, con perspectiva para dar sensación de volumen.
+           */
+          const span = Math.min(width, height) * .5;
+          const angle = time * .09;
+          const cosA = Math.cos(angle);
+          const sinA = Math.sin(angle);
+          const focal = 2.8;
+
+          for (let i = 0; i < starCount; i++) {
+            const star = stars[i];
+
+            const ry = star.dy * cosA - star.dz * sinA;
+            const rz = star.dy * sinA + star.dz * cosA;
+
+            const perspective = focal / Math.max(.4, focal - rz * star.dist);
+
+            const x = centerX + star.dx * star.dist * perspective * span;
+            const y = centerY + ry * star.dist * perspective * span;
+
+            // Las estrellas del frente se ven más grandes y brillantes.
+            const depth = .2 + .8 * ((1 - rz) / 2);
+
+            context.globalAlpha =
+              depth * (.45 + .55 * (.5 + .5 * Math.sin(time * .65 + star.phase)));
+
+            context.fillStyle =
+              star.cyan ? "#8df7ff" : "#eee3ff";
+
+            context.beginPath();
+
+            context.arc(
+              x,
+              y,
+              star.radius * perspective,
+              0,
+              TAU
+            );
+
+            context.fill();
+          }
+
+          for (let i = 0; i < 110; i++) {
+            const angle = i * 2.399963 + time * .08;
+
+            const radius = unit * (
+              .05 + Math.sqrt(i / 110) * .21
+            );
+
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius * .5;
+
+            context.globalAlpha = .2 + (i % 5) * .12;
+            context.fillStyle = i % 3 ? "#75f5ff" : "#ff69db";
+
+            context.beginPath();
+
+            context.arc(
+              centerX + x * .9 + y * .435,
+              centerY - x * .435 + y * .9,
+              i % 7 === 0 ? 1.4 : .7,
+              0,
+              TAU
+            );
+
+            context.fill();
+          }
+
+          context.globalAlpha = 1;
+        }
+
+        /* ================= MOVIMIENTO ORBITAL ================= */
+
+        function render(time) {
+          paintStars(time);
+
+          let path = "";
+          const phase = (time * .2) % 1;
+
+          for (let i = 0; i < 16; i++) {
+            const y = Math.pow((i + phase) / 16, 2) * 360;
+            path += `M0 ${y.toFixed(2)}H1000`;
+          }
+
+          rows.setAttribute("d", path);
+
+          flowers.forEach(flower => {
+            if (flower.state !== "orbit") return;
+            const angle =
+              flower.phase + time * flower.orbit.velocity;
+
+            const radius = unit * flower.orbit.radius;
+            const depth = Math.sin(angle);
+
+            const x =
+              centerX + Math.cos(angle) * radius;
+
+            const y =
+              centerY + depth * radius;
+
+            const scale = .97 + depth * .065;
+            flower.pose = { x, y, scale };
+
+            flower.node.style.transform =
+              `translate3d(${x}px, ${y}px, 0)
+               translate(-50%, -50%)
+               scale(${scale})`;
+
+            flower.node.style.opacity =
+              String(.91 + depth * .09);
+
+            flower.node.style.zIndex =
+              depth < 0 ? "3" : "6";
+          });
+        }
+
+        function frame(now) {
+          frameId = 0;
+
+          if (document.hidden) return;
+
+          const dt = lastTime === null
+            ? 0
+            : Math.min((now - lastTime) / 1000, .05);
+
+          lastTime = now;
+          if (!paused) {
+            elapsed += dt * speed;
+            render(elapsed);
+          }
+          flights.forEach(flower => renderFlight(flower, dt));
+
+          if (!paused || flights.size) frameId = requestAnimationFrame(frame);
+        }
+
+        /* ================= PAUSA ================= */
+
+        function syncMotion() {
+          const stopped = paused || document.hidden;
+
+          scene.classList.toggle("is-paused", stopped);
+
+          const complete = (arrivedCount === flowers.length);
+
+          pauseLabel.textContent =
+            complete ? "Reiniciar" : (paused ? "Reanudar" : "Pausar");
+
+          pauseIcon.textContent =
+            complete ? "↻" : (paused ? "▶" : "Ⅱ");
+
+          pauseButton.setAttribute(
+            "aria-label",
+            complete ? "Reiniciar desde cero" : (paused ? "Reanudar órbitas" : "Pausar órbitas")
+          );
+
+          if (frameId) {
+            cancelAnimationFrame(frameId);
+          }
+
+          frameId = 0;
+          lastTime = null;
+
+          render(elapsed);
+
+          if (!document.hidden && (!paused || flights.size)) {
+            frameId = requestAnimationFrame(frame);
+          }
+        }
+
+        /* ================= IMAGEN PERSONALIZADA ================= */
+
+        function announce(
+          message,
+          error = false,
+          clearAfter = 0
+        ) {
+          clearTimeout(statusTimer);
+
+          assetStatus.textContent = message;
+          assetStatus.classList.toggle("is-error", error);
+
+          if (clearAfter) {
+            statusTimer = setTimeout(() => {
+              assetStatus.textContent = "";
+            }, clearAfter);
+          }
+        }
+
+        function preloadImage(source) {
+          return new Promise((resolve, reject) => {
+            const image = new Image();
+
+            const timeout = setTimeout(() => {
+              finish(new Error("timeout"));
+            }, 12000);
+
+            function finish(error) {
+              clearTimeout(timeout);
+
+              image.onload = null;
+              image.onerror = null;
+
+              if (error) {
+                reject(error);
+              } else {
+                resolve(image);
+              }
+            }
+
+            image.onload = () => {
+              if (image.naturalWidth > 0) {
+                finish();
+              } else {
+                finish(new Error("invalid"));
+              }
+            };
+
+            image.onerror = () => {
+              finish(new Error("load"));
+            };
+
+            image.src = source;
+          });
+        }
+
+        async function loadFlower(source, temporary = false) {
+          const request = ++assetRequest;
+
+          announce("Cargando flor…");
+
+          try {
+            /*
+             * Se valida la imagen antes de sustituir las flores
+             * visibles. Si falla, la escena conserva su imagen actual.
+             */
+            await preloadImage(source);
+
+            /*
+             * Si se seleccionó otra imagen durante la carga,
+             * se descarta este resultado anterior.
+             */
+            if (request !== assetRequest) {
+              if (temporary) {
+                URL.revokeObjectURL(source);
+              }
+
+              return;
+            }
+
+            const previous = activeObjectURL;
+
+            flowers.forEach(flower => {
+              flower.img.src = source;
+            });
+
+            activeObjectURL = temporary ? source : null;
+
+            if (previous) {
+              URL.revokeObjectURL(previous);
+            }
+
+            announce("Flor actualizada.", false, 3500);
+          } catch (error) {
+            if (temporary) {
+              URL.revokeObjectURL(source);
+            }
+
+            if (request === assetRequest) {
+              announce(
+                "No se pudo abrir la imagen. Prueba con PNG, WebP, JPG o SVG.",
+                true
+              );
+            }
+          }
+        }
+
+        /* ================= EVENTOS ================= */
+
+        pauseButton.addEventListener("click", () => {
+          if (arrivedCount === flowers.length) {
+            resetBouquet();
+            paused = false;
+          } else {
+            paused = !paused;
+          }
+          syncMotion();
+        });
+
+
+
+        const preferenceChanged = event => {
+          paused = event.matches;
+          if (event.matches) Array.from(flights).forEach(settleFlower);
+          syncMotion();
+        };
+
+        if (preference.addEventListener) {
+          preference.addEventListener(
+            "change",
+            preferenceChanged
+          );
+        } else {
+          preference.addListener(preferenceChanged);
+        }
+
+        document.addEventListener(
+          "visibilitychange",
+          syncMotion
+        );
+
+        window.addEventListener("resize", resize);
+
+        /* ================= INICIO ================= */
+
+        resize();
+        syncMotion();
+
+        if (FLOWER_IMAGE) {
+          void loadFlower(FLOWER_IMAGE);
+        }
+      }
+
+      initBloom();
+
+      // Forzar reproducción de música en la primera interacción debido a políticas de navegadores
+      const bgMusic = document.getElementById('bg-music');
+      const startMusic = () => {
+        if (bgMusic.paused) {
+          bgMusic.play().catch(() => {});
+        }
+        document.removeEventListener('click', startMusic);
+        document.removeEventListener('touchstart', startMusic);
+      };
+      document.addEventListener('click', startMusic);
+      document.addEventListener('touchstart', startMusic);
+    })();
+  </script>
+</body>
+</html>
