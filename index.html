@@ -448,6 +448,7 @@
       inset: 0;
       pointer-events: none;
       z-index: 10;
+      transform: translateZ(50px);
     }
 
     .flower {
@@ -2788,23 +2789,22 @@ const transitLayer = document.querySelector("#flower-transit");
           const stage = bouquetStage.getBoundingClientRect();
           bouquetBounds = { x: stage.left - rect.left, y: stage.top - rect.top,
                             width: stage.width, height: stage.height };
-          const portrait = window.matchMedia("(max-width: 760px) and (orientation: portrait)").matches;
-          if (portrait) {
-            const top = instruction.getBoundingClientRect().bottom - rect.top + 17;
-            const bottom = area.top - rect.top - 18;
-            centerX = width * .48;
-            centerY = (top + bottom) / 2;
-            unit = Math.min(width * 1.4, Math.max(120, bottom - top) * 1.2);
-            orbitScaleX = 0.85; // Acomoda más horizontalmente
-            orbitScaleY = 1.6;  // Estira verticalmente para usar el espacio
-          } else {
-            centerX = width * .39;
-            centerY = height * .51;
-            unit = Math.min(width * .55, height * (height < 500 ? .56 : .68),
-                            (area.left - rect.left - centerX - 18) * 1.8);
-            orbitScaleX = 1;
-            orbitScaleY = 1;
-          }
+          const topBound = instruction.getBoundingClientRect().bottom - rect.top + 10;
+          // If bouquetArea is on the right, area.left is large. If it's on bottom, area.left is 0.
+          const rightBound = area.left > rect.left + 50 ? area.left - rect.left : width;
+          const bottomBound = area.top > topBound + 50 ? area.top - rect.top : height;
+
+          centerX = rightBound * 0.45;
+          centerY = topBound + (bottomBound - topBound) * 0.5;
+
+          const availableWidth = rightBound;
+          const availableHeight = bottomBound - topBound;
+
+          unit = Math.min(availableWidth, availableHeight) * 1.1;
+
+          // Órbita fluida y responsiva: se estira proporcionalmente al espacio disponible.
+          orbitScaleX = availableWidth / Math.min(availableWidth, availableHeight);
+          orbitScaleY = availableHeight / Math.min(availableWidth, availableHeight);
           scene.style.setProperty("--orbit-x", `${centerX}px`);
           scene.style.setProperty("--orbit-y", `${centerY}px`);
           flights.forEach(flower => {
@@ -2968,9 +2968,6 @@ const transitLayer = document.querySelector("#flower-transit");
 
             flower.node.style.opacity =
               String(.91 + depth * .09);
-
-            flower.node.style.zIndex =
-              depth < 0 ? "3" : "6";
           });
         }
 
