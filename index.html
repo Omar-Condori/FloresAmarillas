@@ -447,11 +447,7 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
-
-      /*
-        No asignar z-index a este contenedor.
-        Sus flores deben compartir las capas con el portal.
-      */
+      z-index: 10;
     }
 
     .flower {
@@ -2442,7 +2438,11 @@ const transitLayer = document.querySelector("#flower-transit");
           flights.clear();
           
           const stems = document.querySelector("#bouquet-stems");
-          if (stems) stems.innerHTML = "";
+          if (stems) {
+            while (stems.firstChild) {
+              stems.removeChild(stems.firstChild);
+            }
+          }
           
           bouquetStage.style.removeProperty("--stage-x");
           bouquetStage.style.removeProperty("--stage-y");
