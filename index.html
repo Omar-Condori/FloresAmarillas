@@ -2150,7 +2150,7 @@
          * También admite WebP, SVG o una imagen en formato data URL.
          * Utiliza una flor recortada con fondo transparente.
          */
-        const FLOWER_IMAGE = "./assets/images/girazol.png";
+        const FLOWER_IMAGE = "assets/images/girazol.png";
 
         /*
          * MÚSICA PARA LOS DOS
@@ -2787,7 +2787,7 @@ const transitLayer = document.querySelector("#flower-transit");
             const bottom = area.top - rect.top - 18;
             centerX = width * .48;
             centerY = (top + bottom) / 2;
-            unit = Math.min(width * .82, Math.max(120, bottom - top) * .83);
+            unit = Math.min(width * 1.4, Math.max(120, bottom - top) * 1.2);
           } else {
             centerX = width * .39;
             centerY = height * .51;
@@ -3175,10 +3175,14 @@ const transitLayer = document.querySelector("#flower-transit");
       const bgMusic = document.getElementById('bg-music');
       const startMusic = () => {
         if (bgMusic.paused) {
-          bgMusic.play().catch(() => {});
+          bgMusic.play().then(() => {
+            document.removeEventListener('click', startMusic);
+            document.removeEventListener('touchstart', startMusic);
+          }).catch(() => {});
+        } else {
+          document.removeEventListener('click', startMusic);
+          document.removeEventListener('touchstart', startMusic);
         }
-        document.removeEventListener('click', startMusic);
-        document.removeEventListener('touchstart', startMusic);
       };
       document.addEventListener('click', startMusic);
       document.addEventListener('touchstart', startMusic);
