@@ -2451,6 +2451,8 @@ const transitLayer = document.querySelector("#flower-transit");
           flowers.forEach(flower => {
             setFlowerState(flower, "orbit");
             flower.slotIndex = -1;
+            flower.node.disabled = false;
+            flower.node.tabIndex = 0;
             flower.node.classList.remove("is-collected", "is-collecting");
             flower.node.style.left = "";
             flower.node.style.top = "";
@@ -2462,6 +2464,9 @@ const transitLayer = document.querySelector("#flower-transit");
             
             flower.floating.style.transform = "";
             flower.turning.style.transform = "";
+            flower.floating.style.animation = "";
+            flower.turning.style.animation = "";
+            flower.tilt.style.animation = "";
             flower.tilt.style.transform = "";
             flower.node.style.transform = `translate3d(${flower.pose.x}px, ${flower.pose.y}px, 0) translate(-50%, -50%) rotate(0deg) scale(1)`;
           });
