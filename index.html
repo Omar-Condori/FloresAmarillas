@@ -140,54 +140,8 @@
       right: clamp(24px, 12vw, 220px);
       width: clamp(78px, 16vmin, 164px);
       aspect-ratio: 1;
-      overflow: hidden;
-      border-radius: 50%;
-      border: 1px solid #e7d8ffb3;
-      background:
-        radial-gradient(
-          circle at 35% 31%,
-          #9b8bb352 0 8%,
-          transparent 9%
-        ),
-        radial-gradient(
-          circle at 65% 58%,
-          #7f659745 0 12%,
-          transparent 13%
-        ),
-        radial-gradient(
-          circle at 30% 72%,
-          #9584b34a 0 6%,
-          transparent 7%
-        ),
-        radial-gradient(
-          circle at 67% 26%,
-          #fff7ff70 0 4%,
-          transparent 5%
-        ),
-        radial-gradient(
-          circle at 32% 25%,
-          #fff8ff,
-          #dacdf9 43%,
-          #9c86dc 76%,
-          #554186
-        );
-      box-shadow:
-        0 0 28px #bdd8ff66,
-        0 0 75px #9868e64d,
-        0 0 150px #a52bcd26,
-        inset -12px -10px 24px #351a6459;
-    }
-
-    .moon::after {
-      content: "";
-      position: absolute;
-      inset: 54% 0 0;
-      background:
-        repeating-linear-gradient(
-          to bottom,
-          transparent 0 7px,
-          #211035a6 7px 10px
-        );
+      object-fit: contain;
+      filter: drop-shadow(0 0 20px rgba(189, 216, 255, 0.4));
     }
 
     /* ================= CUADRÍCULA ================= */
@@ -1561,7 +1515,7 @@
     <div class="universe" aria-hidden="true">
       <div class="nebula" aria-hidden="true"></div>
       <canvas id="space" aria-hidden="true"></canvas>
-      <div class="moon" aria-hidden="true"></div>
+      <img class="moon" src="./assets/images/logo.png" aria-hidden="true" alt="Moon">
 
       <div class="horizon" aria-hidden="true"></div>
 
